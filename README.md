@@ -1,83 +1,202 @@
-# 🚀 FlyRank Task API
+# Task API with SQLite
 
-A simple CRUD (Create, Read, Update, Delete) REST API built using **Node.js** and **Express.js** as part of the FlyRank Backend Engineering Internship.
+## Project Overview
+
+This project is a RESTful CRUD Task API built using **Node.js**, **Express.js**, and **SQLite**.
+
+In Assignment 1, tasks were stored in a JavaScript array, so all data was lost whenever the server restarted.
+
+In this assignment, the in-memory storage has been replaced with a **SQLite database**, allowing tasks to be stored permanently.
+
+The API endpoints remain exactly the same while only the storage layer has changed.
 
 ---
 
-## 📌 Features
+## Features
 
 - Get all tasks
-- Get task by ID
+- Get a task by ID
 - Create a new task
 - Update an existing task
 - Delete a task
-- Input validation
-- Health check endpoint
-- Swagger documentation
+- Automatic SQLite database creation
+- Automatic table creation
+- Sample tasks inserted only on the first run
+- Data persists after server restart
+- Swagger API Documentation
 
 ---
 
-## 🛠️ Tech Stack
+## Technologies Used
 
 - Node.js
 - Express.js
+- SQLite
+- better-sqlite3
 - Swagger UI
-- JavaScript
 
 ---
 
-## 📁 Project Structure
+## Why SQLite?
+
+SQLite was chosen because it is:
+
+- Lightweight
+- Fast
+- Easy to use
+- Requires no separate database server
+- Stores the entire database in a single file
+- Perfect for small backend applications and learning SQL
+
+---
+
+## Database File
+
+The database is automatically created when the application starts.
+
+Database file:
 
 ```
-task-api/
+tasks.db
+```
+
+Location:
+
+```
+task_api/tasks.db
+```
+
+---
+
+## Project Structure
+
+```
+task_api
 │
 ├── controllers/
 │   └── taskController.js
+│
 ├── routes/
 │   └── taskRoutes.js
+│
 ├── data/
-│   └── tasks.js
+│
+├── db.js
 ├── server.js
 ├── swagger.js
 ├── package.json
+├── tasks.db
 └── README.md
 ```
 
 ---
 
-## 🚀 Installation
+## Installation
+
+Clone the repository:
 
 ```bash
-git clone <repository-url>
-cd task-api
-npm install
-node server.js
+git clone <your-repository-url>
 ```
 
-Server runs on:
+Go inside the project:
+
+```bash
+cd task_api
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the server:
+
+```bash
+npm start
+```
+
+Server URL:
 
 ```
 http://localhost:3000
 ```
 
+Swagger Documentation:
+
+```
+http://localhost:3000/docs
+```
+
 ---
 
-## 📚 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | / | API Information |
-| GET | /health | Health Check |
-| GET | /tasks | Get All Tasks |
-| GET | /tasks/:id | Get Task By ID |
-| POST | /tasks | Create Task |
-| PUT | /tasks/:id | Update Task |
-| DELETE | /tasks/:id | Delete Task |
+|----------|------------|----------------|
+| GET | /tasks | Get all tasks |
+| GET | /tasks/:id | Get task by ID |
+| POST | /tasks | Create new task |
+| PUT | /tasks/:id | Update task |
+| DELETE | /tasks/:id | Delete task |
 
 ---
 
-## 👨‍💻 Author
+## Example SQL Query
 
-**Pranay Unde**
+The following SQL query was executed using DB Browser for SQLite:
 
-Backend Engineering Intern – FlyRank
+```sql
+SELECT * FROM tasks;
+```
+
+Example Result:
+
+```
+id | title | done
+------------------------
+1  | Learn Express | 0
+2  | Build CRUD API | 0
+3  | Test API | 1
+```
+
+---
+
+## Database Screenshot
+
+Insert your screenshot here.
+
+Example:
+
+```
+README.md
+images/
+   database.png
+```
+
+Then add:
+
+```markdown
+![Database Screenshot](images/database.png)
+```
+
+---
+
+## Persistence
+
+The SQLite database stores data permanently.
+
+Restarting the server does **not** delete existing tasks.
+
+The database and table are automatically created if they do not already exist.
+
+Three sample tasks are inserted only during the first run.
+
+---
+
+## Author
+
+Pranay Unde
+
+FlyRank Backend Internship

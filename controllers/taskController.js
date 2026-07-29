@@ -1,4 +1,4 @@
-const tasks = require("../data/tasks");
+const db = require("../db");
 
 // GET /
 const getHome = (req, res) => {
@@ -18,20 +18,32 @@ const getHealth = (req, res) => {
 
 // GET /tasks
 const getAllTasks = (req, res) => {
-  res.json(tasks);
+  const tasks = db.prepare("SELECT * FROM tasks").all();
+
+  const formattedTasks = tasks.map(task => ({
+    id: task.id,
+    title: task.title,
+    done: Boolean(task.done),
+  }));
+
+  res.json(formattedTasks);
 };
 
 // GET /tasks/:id
 const getTaskById = (req, res) => {
   const taskId = parseInt(req.params.id);
 
-  const task = tasks.find((t) => t.id === taskId);
+  const task = db
+    .prepare("SELECT * FROM tasks WHERE id = ?")
+    .get(taskId);
 
   if (!task) {
     return res.status(404).json({
       error: `Task ${taskId} not found`,
     });
   }
+
+  task.done = Boolean(task.done);
 
   res.json(task);
 };
@@ -46,13 +58,15 @@ const createTask = (req, res) => {
     });
   }
 
-  const newTask = {
-    id: tasks.length ? tasks[tasks.length - 1].id + 1 : 1,
-    title: title.trim(),
-    done: false,
-  };
+  const result = db
+    .prepare("INSERT INTO tasks (title, done) VALUES (?, ?)")
+    .run(title.trim(), 0);
 
-  tasks.push(newTask);
+  const newTask = db
+    .prepare("SELECT * FROM tasks WHERE id = ?")
+    .get(result.lastInsertRowid);
+
+  newTask.done = Boolean(newTask.done);
 
   res.status(201).json(newTask);
 };
@@ -61,7 +75,9 @@ const createTask = (req, res) => {
 const updateTask = (req, res) => {
   const taskId = parseInt(req.params.id);
 
-  const task = tasks.find((t) => t.id === taskId);
+  const task = db
+    .prepare("SELECT * FROM tasks WHERE id = ?")
+    .get(taskId);
 
   if (!task) {
     return res.status(404).json({
@@ -71,14 +87,16 @@ const updateTask = (req, res) => {
 
   const { title, done } = req.body;
 
+  let updatedTitle = task.title;
+  let updatedDone = task.done;
+
   if (title !== undefined) {
     if (typeof title !== "string" || title.trim() === "") {
       return res.status(400).json({
         error: "Title must be a non-empty string",
       });
     }
-
-    task.title = title.trim();
+    updatedTitle = title.trim();
   }
 
   if (done !== undefined) {
@@ -87,26 +105,35 @@ const updateTask = (req, res) => {
         error: "Done must be true or false",
       });
     }
-
-    task.done = done;
+    updatedDone = done ? 1 : 0;
   }
 
-  res.json(task);
+  db.prepare(
+    "UPDATE tasks SET title = ?, done = ? WHERE id = ?"
+  ).run(updatedTitle, updatedDone, taskId);
+
+  const updatedTask = db
+    .prepare("SELECT * FROM tasks WHERE id = ?")
+    .get(taskId);
+
+  updatedTask.done = Boolean(updatedTask.done);
+
+  res.json(updatedTask);
 };
 
 // DELETE /tasks/:id
 const deleteTask = (req, res) => {
   const taskId = parseInt(req.params.id);
 
-  const index = tasks.findIndex((t) => t.id === taskId);
+  const result = db
+    .prepare("DELETE FROM tasks WHERE id = ?")
+    .run(taskId);
 
-  if (index === -1) {
+  if (result.changes === 0) {
     return res.status(404).json({
       error: `Task ${taskId} not found`,
     });
   }
-
-  tasks.splice(index, 1);
 
   res.status(204).send();
 };

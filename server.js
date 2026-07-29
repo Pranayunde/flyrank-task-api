@@ -2,6 +2,7 @@ const express = require("express");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger");
 const taskRoutes = require("./routes/taskRoutes");
+const db = require("./db");
 
 const app = express();
 const PORT = 3000;
