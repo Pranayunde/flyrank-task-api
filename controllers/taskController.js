@@ -1,4 +1,4 @@
-const db = require("../db");
+const repository = require("../repositories/postgresRepository");
 
 // GET /
 const getHome = (req, res) => {
@@ -17,25 +17,16 @@ const getHealth = (req, res) => {
 };
 
 // GET /tasks
-const getAllTasks = (req, res) => {
-  const tasks = db.prepare("SELECT * FROM tasks").all();
-
-  const formattedTasks = tasks.map(task => ({
-    id: task.id,
-    title: task.title,
-    done: Boolean(task.done),
-  }));
-
-  res.json(formattedTasks);
+const getAllTasks = async (req, res) => {
+  const tasks = await repository.getAllTasks();
+  res.json(tasks);
 };
 
 // GET /tasks/:id
-const getTaskById = (req, res) => {
+const getTaskById = async (req, res) => {
   const taskId = parseInt(req.params.id);
 
-  const task = db
-    .prepare("SELECT * FROM tasks WHERE id = ?")
-    .get(taskId);
+  const task = await repository.getTaskById(taskId);
 
   if (!task) {
     return res.status(404).json({
@@ -43,13 +34,11 @@ const getTaskById = (req, res) => {
     });
   }
 
-  task.done = Boolean(task.done);
-
   res.json(task);
 };
 
 // POST /tasks
-const createTask = (req, res) => {
+const createTask = async (req, res) => {
   const { title } = req.body;
 
   if (!title || typeof title !== "string" || title.trim() === "") {
@@ -58,26 +47,16 @@ const createTask = (req, res) => {
     });
   }
 
-  const result = db
-    .prepare("INSERT INTO tasks (title, done) VALUES (?, ?)")
-    .run(title.trim(), 0);
-
-  const newTask = db
-    .prepare("SELECT * FROM tasks WHERE id = ?")
-    .get(result.lastInsertRowid);
-
-  newTask.done = Boolean(newTask.done);
+  const newTask = await repository.createTask(title.trim());
 
   res.status(201).json(newTask);
 };
 
 // PUT /tasks/:id
-const updateTask = (req, res) => {
+const updateTask = async (req, res) => {
   const taskId = parseInt(req.params.id);
 
-  const task = db
-    .prepare("SELECT * FROM tasks WHERE id = ?")
-    .get(taskId);
+  const task = await repository.getTaskById(taskId);
 
   if (!task) {
     return res.status(404).json({
@@ -105,31 +84,25 @@ const updateTask = (req, res) => {
         error: "Done must be true or false",
       });
     }
-    updatedDone = done ? 1 : 0;
+    updatedDone = done;
   }
 
-  db.prepare(
-    "UPDATE tasks SET title = ?, done = ? WHERE id = ?"
-  ).run(updatedTitle, updatedDone, taskId);
-
-  const updatedTask = db
-    .prepare("SELECT * FROM tasks WHERE id = ?")
-    .get(taskId);
-
-  updatedTask.done = Boolean(updatedTask.done);
+  const updatedTask = await repository.updateTask(
+    taskId,
+    updatedTitle,
+    updatedDone
+  );
 
   res.json(updatedTask);
 };
 
 // DELETE /tasks/:id
-const deleteTask = (req, res) => {
+const deleteTask = async (req, res) => {
   const taskId = parseInt(req.params.id);
 
-  const result = db
-    .prepare("DELETE FROM tasks WHERE id = ?")
-    .run(taskId);
+  const deleted = await repository.deleteTask(taskId);
 
-  if (result.changes === 0) {
+  if (!deleted) {
     return res.status(404).json({
       error: `Task ${taskId} not found`,
     });

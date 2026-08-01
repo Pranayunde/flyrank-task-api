@@ -1,14 +1,14 @@
-# Task API with SQLite
+# Task API with PostgreSQL (Docker)
 
 ## Project Overview
 
-This project is a RESTful CRUD Task API built using **Node.js**, **Express.js**, and **SQLite**.
+This project is a RESTful CRUD Task API built using **Node.js**, **Express.js**, and **PostgreSQL** running inside **Docker**.
 
-In Assignment 1, tasks were stored in a JavaScript array, so all data was lost whenever the server restarted.
+In the previous assignment, tasks were stored using SQLite. In this assignment, the storage layer has been migrated to **PostgreSQL**, providing a more powerful and production-ready relational database.
 
-In this assignment, the in-memory storage has been replaced with a **SQLite database**, allowing tasks to be stored permanently.
+Docker is used to run PostgreSQL in a container, making setup simple and consistent across different systems.
 
-The API endpoints remain exactly the same while only the storage layer has changed.
+The API endpoints remain exactly the same while only the database layer has changed.
 
 ---
 
@@ -19,10 +19,10 @@ The API endpoints remain exactly the same while only the storage layer has chang
 - Create a new task
 - Update an existing task
 - Delete a task
-- Automatic SQLite database creation
-- Automatic table creation
-- Sample tasks inserted only on the first run
-- Data persists after server restart
+- PostgreSQL database
+- Docker container support
+- Environment variables using dotenv
+- Data persists using Docker Volumes
 - Swagger API Documentation
 
 ---
@@ -31,61 +31,109 @@ The API endpoints remain exactly the same while only the storage layer has chang
 
 - Node.js
 - Express.js
-- SQLite
-- better-sqlite3
+- PostgreSQL
+- Docker
+- pg
+- dotenv
 - Swagger UI
 
 ---
 
-## Why SQLite?
+## Why PostgreSQL?
 
-SQLite was chosen because it is:
+PostgreSQL was chosen because it is:
 
-- Lightweight
-- Fast
-- Easy to use
-- Requires no separate database server
-- Stores the entire database in a single file
-- Perfect for small backend applications and learning SQL
+- Open-source
+- Powerful relational database
+- Highly reliable
+- ACID compliant
+- Supports advanced SQL features
+- Used in many production applications
+- Easily runs inside Docker containers
 
 ---
 
-## Database File
+## Docker Setup
 
-The database is automatically created when the application starts.
+Pull the PostgreSQL image:
 
-Database file:
-
-```
-tasks.db
+```bash
+docker pull postgres:17
 ```
 
-Location:
+Run PostgreSQL container:
 
+```bash
+docker run --name taskdb ^
+-e POSTGRES_PASSWORD=dev ^
+-e POSTGRES_DB=tasks ^
+-p 5432:5432 ^
+-v taskdata:/var/lib/postgresql ^
+-d postgres:17
 ```
-task_api/tasks.db
+
+Verify the container:
+
+```bash
+docker ps
+```
+
+Connect to PostgreSQL:
+
+```bash
+docker exec -it taskdb psql -U postgres -d tasks
+```
+
+---
+
+## Database Configuration
+
+Create a `.env` file in the project root:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=dev
+DB_NAME=tasks
+```
+
+---
+
+## Database Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS tasks (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    done BOOLEAN NOT NULL DEFAULT FALSE
+);
 ```
 
 ---
 
 ## Project Structure
 
-```
+```text
 task_api
 │
 ├── controllers/
 │   └── taskController.js
 │
+├── repositories/
+│   └── postgresRepository.js
+│
 ├── routes/
 │   └── taskRoutes.js
 │
-├── data/
+├── images/
+│   └── database.png
 │
-├── db.js
+├── .env
 ├── server.js
 ├── swagger.js
 ├── package.json
-├── tasks.db
+├── package-lock.json
 └── README.md
 ```
 
@@ -99,7 +147,7 @@ Clone the repository:
 git clone <your-repository-url>
 ```
 
-Go inside the project:
+Go to the project directory:
 
 ```bash
 cd task_api
@@ -111,13 +159,19 @@ Install dependencies:
 npm install
 ```
 
-Start the server:
+Start PostgreSQL using Docker:
 
 ```bash
-npm start
+docker start taskdb
 ```
 
-Server URL:
+Run the application:
+
+```bash
+node server.js
+```
+
+Server:
 
 ```
 http://localhost:3000
@@ -134,48 +188,54 @@ http://localhost:3000/docs
 ## API Endpoints
 
 | Method | Endpoint | Description |
-|----------|------------|----------------|
+|---------|----------|-------------|
+| GET | / | Home |
+| GET | /health | Health Check |
 | GET | /tasks | Get all tasks |
 | GET | /tasks/:id | Get task by ID |
-| POST | /tasks | Create new task |
+| POST | /tasks | Create task |
 | PUT | /tasks/:id | Update task |
 | DELETE | /tasks/:id | Delete task |
 
 ---
 
-## Example SQL Query
+## Example SQL Queries
 
-The following SQL query was executed using DB Browser for SQLite:
+Insert a task:
+
+```sql
+INSERT INTO tasks (title, done)
+VALUES ('Learn PostgreSQL', false);
+```
+
+View all tasks:
 
 ```sql
 SELECT * FROM tasks;
 ```
 
-Example Result:
+Example Output:
 
-```
-id | title | done
-------------------------
-1  | Learn Express | 0
-2  | Build CRUD API | 0
-3  | Test API | 1
+```text
+ id |       title        | done
+----+--------------------+-------
+ 1  | Learn PostgreSQL   | false
 ```
 
 ---
 
 ## Database Screenshot
 
-Insert your screenshot here.
+Save your PostgreSQL table screenshot inside the `images` folder.
 
 Example:
 
-```
-README.md
+```text
 images/
    database.png
 ```
 
-Then add:
+Add this line to display it:
 
 ```markdown
 ![Database Screenshot](images/database.png)
@@ -185,18 +245,28 @@ Then add:
 
 ## Persistence
 
-The SQLite database stores data permanently.
+The PostgreSQL database stores data permanently using a Docker Volume.
 
-Restarting the server does **not** delete existing tasks.
+Restarting the server or Docker container does **not** delete existing tasks.
 
-The database and table are automatically created if they do not already exist.
+Data remains available until the Docker volume is removed.
 
-Three sample tasks are inserted only during the first run.
+---
+
+## Swagger Documentation
+
+Interactive API documentation is available at:
+
+```
+http://localhost:3000/docs
+```
+
+Swagger UI allows you to test all API endpoints directly from the browser.
 
 ---
 
 ## Author
 
-Pranay Unde
+**Pranay Unde**
 
 FlyRank Backend Internship
