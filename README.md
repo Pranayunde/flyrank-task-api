@@ -1,183 +1,117 @@
-# Task API with PostgreSQL (Docker)
+# FlyRank Secure Authentication API
 
 ## Project Overview
 
-This project is a RESTful CRUD Task API built using **Node.js**, **Express.js**, and **PostgreSQL** running inside **Docker**.
+This project is a secure REST API built using **Node.js**, **Express.js**, and **Supabase Authentication**.
 
-In the previous assignment, tasks were stored using SQLite. In this assignment, the storage layer has been migrated to **PostgreSQL**, providing a more powerful and production-ready relational database.
+The API allows users to:
 
-Docker is used to run PostgreSQL in a container, making setup simple and consistent across different systems.
+- Sign Up
+- Login
+- Logout
+- Access Public Routes
+- Access Protected Routes using JWT Authentication
 
-The API endpoints remain exactly the same while only the database layer has changed.
+Supabase is used as the Identity Provider (IdP) to securely manage users and generate JSON Web Tokens (JWT).
 
 ---
 
-## Features
+# Features
 
-- Get all tasks
-- Get a task by ID
-- Create a new task
-- Update an existing task
-- Delete a task
-- PostgreSQL database
-- Docker container support
-- Environment variables using dotenv
-- Data persists using Docker Volumes
+- User Registration (Signup)
+- User Login
+- User Logout
+- JWT Authentication
+- Protected Routes
+- Public Routes
+- Authentication Middleware
 - Swagger API Documentation
+- Environment Variables using dotenv
 
 ---
 
-## Technologies Used
+# Technologies Used
 
 - Node.js
 - Express.js
-- PostgreSQL
-- Docker
-- pg
+- Supabase Auth
+- JWT (Supabase Access Token)
 - dotenv
 - Swagger UI
+- Git & GitHub
 
 ---
 
-## Why PostgreSQL?
+# Project Structure
 
-PostgreSQL was chosen because it is:
-
-- Open-source
-- Powerful relational database
-- Highly reliable
-- ACID compliant
-- Supports advanced SQL features
-- Used in many production applications
-- Easily runs inside Docker containers
-
----
-
-## Docker Setup
-
-Pull the PostgreSQL image:
-
-```bash
-docker pull postgres:17
 ```
-
-Run PostgreSQL container:
-
-```bash
-docker run --name taskdb ^
--e POSTGRES_PASSWORD=dev ^
--e POSTGRES_DB=tasks ^
--p 5432:5432 ^
--v taskdata:/var/lib/postgresql ^
--d postgres:17
-```
-
-Verify the container:
-
-```bash
-docker ps
-```
-
-Connect to PostgreSQL:
-
-```bash
-docker exec -it taskdb psql -U postgres -d tasks
-```
-
----
-
-## Database Configuration
-
-Create a `.env` file in the project root:
-
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=dev
-DB_NAME=tasks
-```
-
----
-
-## Database Schema
-
-```sql
-CREATE TABLE IF NOT EXISTS tasks (
-    id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL,
-    done BOOLEAN NOT NULL DEFAULT FALSE
-);
-```
-
----
-
-## Project Structure
-
-```text
 task_api
 │
-├── controllers/
-│   └── taskController.js
+├── config/
+│   └── supabase.js
 │
-├── repositories/
-│   └── postgresRepository.js
+├── middleware/
+│   └── authMiddleware.js
 │
 ├── routes/
+│   ├── authRoutes.js
+│   ├── protectedRoutes.js
+│   ├── publicRoutes.js
 │   └── taskRoutes.js
 │
-├── images/
-│   └── database.png
+├── controllers/
 │
-├── .env
-├── server.js
 ├── swagger.js
+├── server.js
 ├── package.json
-├── package-lock.json
+├── .env
+├── .gitignore
 └── README.md
 ```
 
 ---
 
-## Installation
+# Installation
 
-Clone the repository:
+Clone the repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Pranayunde/task_api.git
 ```
 
-Go to the project directory:
+Go inside the project
 
 ```bash
 cd task_api
 ```
 
-Install dependencies:
+Install dependencies
 
 ```bash
 npm install
 ```
 
-Start PostgreSQL using Docker:
+Create a `.env` file
 
-```bash
-docker start taskdb
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_KEY=your_supabase_anon_key
+PORT=3000
 ```
 
-Run the application:
+Run the project
 
 ```bash
-node server.js
+npm start
 ```
 
-Server:
+Server starts at
 
 ```
 http://localhost:3000
 ```
 
-Swagger Documentation:
+Swagger Documentation
 
 ```
 http://localhost:3000/docs
@@ -185,88 +119,125 @@ http://localhost:3000/docs
 
 ---
 
-## API Endpoints
+# API Endpoints
 
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| GET | / | Home |
-| GET | /health | Health Check |
-| GET | /tasks | Get all tasks |
-| GET | /tasks/:id | Get task by ID |
-| POST | /tasks | Create task |
-| PUT | /tasks/:id | Update task |
-| DELETE | /tasks/:id | Delete task |
-
----
-
-## Example SQL Queries
-
-Insert a task:
-
-```sql
-INSERT INTO tasks (title, done)
-VALUES ('Learn PostgreSQL', false);
-```
-
-View all tasks:
-
-```sql
-SELECT * FROM tasks;
-```
-
-Example Output:
-
-```text
- id |       title        | done
-----+--------------------+-------
- 1  | Learn PostgreSQL   | false
-```
+| Method | Endpoint | Authentication | Description |
+|---------|----------|---------------|-------------|
+| POST | /auth/signup | ❌ No | Register a new user |
+| POST | /auth/login | ❌ No | Login user |
+| POST | /auth/logout | ✅ Yes | Logout user |
+| GET | /public/info | ❌ No | Public endpoint |
+| GET | /protected/profile | ✅ Yes | User profile |
+| GET | /protected/dashboard | ✅ Yes | Protected dashboard |
+| GET | /tasks | ❌ No | Get tasks |
+| POST | /tasks | ❌ No | Create task |
 
 ---
 
-## Database Screenshot
+# Authentication Flow
 
-Save your PostgreSQL table screenshot inside the `images` folder.
+1. User signs up using email and password.
 
-Example:
+2. User logs in.
 
-```text
+3. Supabase returns:
+
+- Access Token
+- Refresh Token
+
+4. Client sends
+
+```
+Authorization: Bearer <access_token>
+```
+
+5. Middleware verifies the token.
+
+6. If valid:
+
+- User can access protected routes.
+
+Otherwise:
+
+```
+401 Unauthorized
+```
+
+---
+
+# Status Codes
+
+| Status | Meaning |
+|---------|---------|
+| 200 | Success |
+| 201 | User Created |
+| 204 | Logout Successful |
+| 400 | Missing Input |
+| 401 | Unauthorized |
+
+---
+
+# Swagger Documentation
+
+Swagger UI is available at
+
+```
+http://localhost:3000/docs
+```
+
+Swagger supports Bearer Authentication.
+
+Use the **Authorize** button to enter your Access Token before testing protected routes.
+
+---
+
+# Environment Variables
+
+Create a `.env` file.
+
+```
+SUPABASE_URL=your_project_url
+SUPABASE_KEY=your_anon_key
+PORT=3000
+```
+
+Never upload your `.env` file to GitHub.
+
+---
+
+# Security
+
+- Passwords are managed securely by Supabase.
+- JWT Tokens are verified before accessing protected routes.
+- Authentication logic is handled using reusable middleware.
+- Sensitive credentials are stored in environment variables.
+
+---
+
+# Screenshot
+
+Add your Swagger UI screenshot inside
+
+```
 images/
-   database.png
 ```
 
-Add this line to display it:
+Example
+
+```
+images/swagger.png
+```
+
+Then display it using
 
 ```markdown
-![Database Screenshot](images/database.png)
+![Swagger UI](images/swagger.png)
 ```
 
 ---
 
-## Persistence
-
-The PostgreSQL database stores data permanently using a Docker Volume.
-
-Restarting the server or Docker container does **not** delete existing tasks.
-
-Data remains available until the Docker volume is removed.
-
----
-
-## Swagger Documentation
-
-Interactive API documentation is available at:
-
-```
-http://localhost:3000/docs
-```
-
-Swagger UI allows you to test all API endpoints directly from the browser.
-
----
-
-## Author
+# Author
 
 **Pranay Unde**
 
-FlyRank Backend Internship
+FlyRank AI Backend Internship
