@@ -58,4 +58,27 @@ router.post("/login", async (req, res) => {
     });
 });
 
+// POST /auth/logout
+router.post("/logout", async (req, res) => {
+
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({
+            error: "Access token required"
+        });
+    }
+
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+        return res.status(400).json({
+            error: error.message
+        });
+    }
+
+    return res.status(204).send();
+
+});
+
 module.exports = router;

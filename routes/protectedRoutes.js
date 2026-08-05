@@ -1,36 +1,24 @@
 const express = require("express");
-const supabase = require("../config/supabase");
 const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
 
 // GET /protected/profile
-// GET /protected/profile
-router.get("/profile", async (req, res) => {
+router.get("/profile", authMiddleware, (req, res) => {
 
-    const authHeader = req.headers.authorization;
+    res.status(200).json({
+        id: req.user.id,
+        email: req.user.email,
+        created_at: req.user.created_at
+    });
 
-    // Check Authorization header
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({
-            error: "Access token required"
-        });
-    }
+});
 
-    // Extract token
-    const token = authHeader.split(" ")[1];
+// GET /protected/dashboard
+router.get("/dashboard", authMiddleware, (req, res) => {
 
-    // Verify token with Supabase
-    const { data, error } = await supabase.auth.getUser(token);
-
-    if (error) {
-        return res.status(401).json({
-            error: "Invalid or expired token"
-        });
-    }
-
-    return res.status(200).json({
-        id: data.user.id,
-        email: data.user.email,
-        created_at: data.user.created_at
+    res.status(200).json({
+        message: `Welcome ${req.user.email}`,
+        dashboard: "This is a protected dashboard."
     });
 
 });
