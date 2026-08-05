@@ -24,3 +24,32 @@ router.get("/dashboard", authMiddleware, (req, res) => {
 });
 
 module.exports = router;
+
+/**
+ * @swagger
+ * /protected/profile:
+ *   get:
+ *     summary: Get logged-in user profile
+ *     tags:
+ *       - Protected
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile
+ *       401:
+ *         description: Unauthorized
+ *
+ * /protected/dashboard:
+ *   get:
+ *     summary: Protected dashboard
+ *     tags:
+ *       - Protected
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard data
+ *       401:
+ *         description: Unauthorized
+ */

@@ -9,3 +9,15 @@ router.get("/info", (req, res) => {
 });
 
 module.exports = router;
+
+/**
+ * @swagger
+ * /public/info:
+ *   get:
+ *     summary: Get public information
+ *     tags:
+ *       - Public
+ *     responses:
+ *       200:
+ *         description: Public information
+ */
